@@ -1,0 +1,92 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: CMake build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+  test:
+    name: Zephyr tests (qemu_cortex_a53)
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: libharu
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Set up Zephyr workspace and SDK
+        uses: zephyrproject-rtos/action-zephyr-setup@v1
+        with:
+          app-path: libharu
+          toolchains: aarch64-zephyr-elf
+      - name: Build and run tests
+        run: >-
+          west twister
+          -T libharu/tests
+          -T libharu/samples
+          -p qemu_cortex_a53
+          --inline-logs
+          --outdir twister-out
+
+  documentation:
+    name: Versioned documentation
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      DOC_VERSION: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: doc/requirements.txt
+      - name: Install dependencies
+        run: python -m pip install -r doc/requirements.txt
+      - name: Build HTML documentation
+        run: python -m sphinx -W --keep-going -b html doc build/docs
+      - name: Archive documentation
+        run: tar -C build/docs -czf libharu-docs.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-documentation-${{ github.run_id }}
+          path: libharu-docs.tar.gz
+
+  release:
+    name: Create GitHub release
+    needs: documentation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-documentation-${{ github.run_id }}
+          path: release-assets
+      - name: Create release from tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "${{ github.ref_name }}"
+          --verify-tag
+          --notes-from-tag
+          "release-assets/libharu-docs.tar.gz#HTML documentation (${{ github.ref_name }})"

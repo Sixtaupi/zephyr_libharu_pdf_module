@@ -1,5 +1,10 @@
 # Haru Free PDF Library for Zephyr 
 
+[![CMake](https://github.com/Sixtaupi/zephyr_libharu_pdf_module/actions/workflows/cmake.yml/badge.svg)](https://github.com/Sixtaupi/zephyr_libharu_pdf_module/actions/workflows/cmake.yml)
+[![Build & test](https://github.com/Sixtaupi/zephyr_libharu_pdf_module/actions/workflows/build-test.yml/badge.svg)](https://github.com/Sixtaupi/zephyr_libharu_pdf_module/actions/workflows/build-test.yml)
+[![CodeQL](https://github.com/Sixtaupi/zephyr_libharu_pdf_module/actions/workflows/codeql.yml/badge.svg)](https://github.com/Sixtaupi/zephyr_libharu_pdf_module/actions/workflows/codeql.yml)
+[![Documentation](https://github.com/Sixtaupi/zephyr_libharu_pdf_module/actions/workflows/documentation.yml/badge.svg)](https://github.com/Sixtaupi/zephyr_libharu_pdf_module/actions/workflows/documentation.yml)
+
   **URL http://libharu.org/**
 
   **Copyright 2000-2006 (c) Takeshi Kanno**

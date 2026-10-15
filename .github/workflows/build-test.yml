@@ -1,0 +1,58 @@
+name: Build & test
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-test-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cmake:
+    name: CMake prerequisite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+  zephyr:
+    name: Zephyr tests (qemu_cortex_a53)
+    needs: cmake
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: libharu
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Set up Zephyr workspace and SDK
+        uses: zephyrproject-rtos/action-zephyr-setup@v1
+        with:
+          app-path: libharu
+          toolchains: aarch64-zephyr-elf
+      - name: Build and run tests
+        run: >-
+          west twister
+          -T libharu/tests
+          -T libharu/samples
+          -p qemu_cortex_a53
+          --inline-logs
+          --outdir twister-out
+      - name: Upload Twister reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: twister-results-${{ github.run_id }}
+          path: |
+            twister-out/twister.json
+            twister-out/twister.xml
+            twister-out/**/handler.log
+            twister-out/**/twister_harness.log
+          if-no-files-found: warn
