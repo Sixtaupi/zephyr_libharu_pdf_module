@@ -123,6 +123,8 @@ necessary. About this, please refer to the documentation of PNGLIB and ZLIB.
 
 # License
 
+Zephyr related code is distributed under the Apache-2 license.
+
 Haru is distributed under the ZLIB/LIBPNG License. Because ZLIB/LIBPNG License 
 is one of the freest licenses, You can use Haru for various purposes.
 
